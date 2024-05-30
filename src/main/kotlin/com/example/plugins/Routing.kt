@@ -2,19 +2,29 @@ package com.example.plugins
 
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.util.concurrent.ConcurrentLinkedQueue
+
+val messageQueue = ConcurrentLinkedQueue<String>()
 
 fun Application.configureRouting() {
     routing {
-        get("/") {
-            call.respondText("Hello World!")
+        post("/send") {
+            val message = call.receive<String>()
+            messageQueue.add(message)
+            call.respondText("Message received", status = HttpStatusCode.OK)
         }
 
-        get("/test1") {
-            val text = "<h1>Hello From Ktor</h1>"
-            val type = ContentType.parse("text/html1")
-            call.respondText(text, type)
+        get("/receive") {
+            val response = if (messageQueue.isNotEmpty()) {
+                val message = messageQueue.poll()
+                "M'han dit: $message i jo responc: My name is pong"
+            } else {
+                "No messages"
+            }
+            call.respondText(response, status = HttpStatusCode.OK)
         }
     }
 }
